@@ -47,7 +47,7 @@ class DatabaseManager:
 
     def load_env(self, path_env: str) -> None:
         if path_env is not None and pathlib.Path(path_env).exists():
-            dotenv.load_env(path_env)
+            dotenv.load_dotenv(path_env, overwrite=True)
 
     def obtain_db_info(self) -> dict:
         keys_info = self.keys_info    
