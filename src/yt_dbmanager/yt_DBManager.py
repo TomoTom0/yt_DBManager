@@ -35,7 +35,7 @@ class DatabaseManager:
             "DB_PASSWD": "DB_PASSWD",
             "DB_ACCESS": "DB_ACCESS",
         }
-        keys_info = (keys_info | {}) | keys_info_default
+        keys_info = (keys_info or {}) | keys_info_default
         self.keys_info = keys_info
         self.load_env(path_env)
         self.obtain_db_info()
