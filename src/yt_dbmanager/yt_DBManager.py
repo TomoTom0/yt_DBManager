@@ -9,6 +9,7 @@ import dotenv
 import pathlib
 import os
 import pandas as pd
+import numpy as np
 # from pathlib import Path
 
 # import urllib
@@ -98,6 +99,23 @@ class DatabaseManager:
         self.df_col = df_col
         self.close()
         return df_col
+    
+    def obtain_tableContent(self,
+                            sql_cmd: str | None = None,
+                            params = tuple([]), 
+                            tableName: str | None = None) -> pd.DataFrame:
+        tableName = tableName or self.tableName
+        if tableName is None:
+            raise ValueError("tableName is None")
+        df_col = self.obtain_colInfo(tableName)
+        self.connect()
+        cursor = self.cursor
+        if sql_cmd is None:
+            sql_cmd = "SELECT * FROM {}".format(tableName)
+        cursor.execute(sql_cmd, params)
+        res = [s for s in cursor]
+        df_obtained = pd.DataFrame(res, columns=df_col["COLUMN_NAME"])
+        return df_obtained
 
     def executeUpsertIntoDB(
         self,
@@ -155,6 +173,19 @@ class DatabaseManager:
         self.close()
         return True
 
+    def complement_uuid4(self, df_new: pd.DataFrame, df_old: pd.DataFrame, keys_match: list[str] ,key_uuid4: str = "uuid4") -> pd.DataFrame:
+        rows_new = []
+        for _, row in df_new.iterrows():
+            rows_old = df_old[np.all(df_old[keys_match] == row[keys_match], axis=1)]
+            if len(rows_old) > 0:
+                row_old = rows_old.iloc[0]
+                row[key_uuid4] = row_old[key_uuid4]
+                rows_new.append(row)
+                continue
+            row[key_uuid4] = str(uuid.uuid4())
+            rows_new.append(row)
+        return pd.DataFrame(rows_new)
+
     def splitItems(
         self,
         df_items: pd.DataFrame,
@@ -184,9 +215,9 @@ class DatabaseManager:
         self.close()
         return df_exist, df_new
 
-    def executeUpsertIntoDB_all(self, df_made, colNames):
-        tableName = self.tableName
-        df_exist, df_new = self.splitItems(df_made, tableName, "uuid4")
+    def executeUpsertIntoDB_all(self, df_made, colNames, key_id = "uuid4", tableName: str | None = None):
+        tableName = tableName or self.tableName
+        df_exist, df_new = self.splitItems(df_made, tableName, key_id)
         for df_tmp, flag_exist in zip([df_exist, df_new], [True, False]):
-            self.executeUpsertIntoDB(df_tmp, colNames, flag_exist, tableName, "uuid4")
+            self.executeUpsertIntoDB(df_tmp, colNames, flag_exist, tableName, key_id)
         # self.db.commit()
