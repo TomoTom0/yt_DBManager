@@ -52,9 +52,10 @@ class DatabaseManager:
 
     def obtain_db_info(self) -> dict:
         keys_info = self.keys_info    
-        user = os.getenv(keys_info.get("DB_USERNAME"))
-        passwd = os.getenv(keys_info.get("DB_PASSWD"))
-        self.info_db = json.loads(os.getenv(keys_info.get("DB_ACCESS"))) | {
+        user = os.getenv("DB_USERNAME", keys_info.get("DB_USERNAME"))
+        passwd = os.getenv("DB_PASSWD", keys_info.get("DB_PASSWD"))
+        self.info_db = json.loads(
+            os.getenv("DB_ACCESS", keys_info.get("DB_ACCESS"))) | {
             "user": user,
             "password": passwd,
         }
@@ -68,6 +69,7 @@ class DatabaseManager:
         info_db_valid = {**self.info_db, **info_db}
         self.info_db = info_db_valid
         db = mysql.connector.connect(**info_db_valid)
+        db.connect()
         cursor = db.cursor()
         self.db = db
         self.cursor = cursor
@@ -79,6 +81,7 @@ class DatabaseManager:
 
     def reconnect(self) -> mysql.connector.cursor.MySQLCursor:
         db = self.db
+        db.connect()
         cursor = db.cursor()
         self.cursor = cursor
         return cursor

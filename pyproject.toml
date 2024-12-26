@@ -1,6 +1,6 @@
 [project]
 name = "yt-dbmanager"
-version = "0.3.6"
+version = "0.3.8"
 description = "Add your description here"
 authors = [
     { name = "TomoTom0", email = "tomoIris427+GitHub@gmail.com" }
